@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OS Deadlock Analysis & Resource Allocation Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient Background Glows -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="top-header glass-card">
+      <div class="brand-section">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+            <path d="M6 8h.01M10 8h.01M6 12h12"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="eyebrow-tag">OPERATING SYSTEM KERNEL • RESOURCE &amp; DEADLOCK ANALYZER</div>
+          <h1>Deadlock Analysis &amp; Resource Allocation Dashboard</h1>
+        </div>
+      </div>
+
+      <div class="status-legend">
+        <div class="legend-title">5 Distinct System States</div>
+        <div class="legend-items">
+          <span class="legend-chip chip-safe">Safe State</span>
+          <span class="legend-chip chip-wait">Waiting / Deferred</span>
+          <span class="legend-chip chip-unsafe">Unsafe (Denied)</span>
+          <span class="legend-chip chip-deadlock">Confirmed Deadlock</span>
+          <span class="legend-chip chip-invalid">Invalid / Boundary</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Single Clean Scenario Navigation Bar (1 Tab = 1 Specific Scenario) -->
+    <nav class="scenario-tabs glass-card">
+      <button class="nav-tab active" data-tab="scenario-a">
+        <span class="dot dot-safe"></span>
+        <div class="tab-label-wrap">
+          <span class="tab-code">SCENARIO A</span>
+          <span class="tab-title">Safe State</span>
+        </div>
+      </button>
+
+      <button class="nav-tab" data-tab="scenario-b">
+        <span class="dot dot-wait"></span>
+        <div class="tab-label-wrap">
+          <span class="tab-code">SCENARIO B</span>
+          <span class="tab-title">Exceeds Available</span>
+        </div>
+      </button>
+
+      <button class="nav-tab" data-tab="scenario-c">
+        <span class="dot dot-unsafe"></span>
+        <div class="tab-label-wrap">
+          <span class="tab-code">SCENARIO C</span>
+          <span class="tab-title">Unsafe Request</span>
+        </div>
+      </button>
+
+      <button class="nav-tab" data-tab="scenario-d">
+        <span class="dot dot-deadlock"></span>
+        <div class="tab-label-wrap">
+          <span class="tab-code">SCENARIO D</span>
+          <span class="tab-title">Detection &amp; Recovery</span>
+        </div>
+      </button>
+
+      <button class="nav-tab" data-tab="scenario-e">
+        <span class="dot dot-prevent"></span>
+        <div class="tab-label-wrap">
+          <span class="tab-code">SCENARIO E</span>
+          <span class="tab-title">Prevention Policy</span>
+        </div>
+      </button>
+
+      <button class="nav-tab" data-tab="scenario-f">
+        <span class="dot dot-invalid"></span>
+        <div class="tab-label-wrap">
+          <span class="tab-code">SCENARIO F</span>
+          <span class="tab-title">Boundary &amp; Invalid</span>
+        </div>
+      </button>
+
+      <button class="nav-tab" data-tab="report">
+        <span class="dot dot-report"></span>
+        <div class="tab-label-wrap">
+          <span class="tab-code">ANALYSIS &amp; LOGS</span>
+          <span class="tab-title">TC1–TC6 &amp; Concepts</span>
+        </div>
+      </button>
+    </nav>
+
+    <!-- Scenario-Specific Status Banner -->
+    <section id="globalStatusBanner" class="status-banner state-safe glass-card">
+      <div class="status-left">
+        <div id="statusBadgePill" class="status-badge">SAFE STATE</div>
+        <div class="status-text-block">
+          <h2 id="statusTitle">Scenario A: System is in a Verified Safe State</h2>
+          <p id="statusDescription">
+            Banker's Safety Algorithm confirmed a valid execution sequence where every process can acquire its maximum needed resources and complete safely.
+          </p>
+          <div id="statusSubNote" class="status-subnote">
+            <strong>Core Mechanism:</strong> Computes Need = Max − Allocation, updates the Work vector as each process completes, and verifies a complete Safe Sequence.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB A: SCENARIO A — SAFE STATE (BANKER'S SAFETY ALGORITHM ONLY)   -->
+    <!-- ================================================================= -->
+    <main id="tab-scenario-a" class="tab-panel active">
+      <div class="two-col-grid">
+        <!-- Left: Configuration & Matrices -->
+        <div class="col-stack">
+          <div class="glass-card card-pad">
+            <div class="card-header">
+              <div>
+                <h3>Scenario A: System Configuration &amp; Available Vector</h3>
+                <p class="card-subtitle">Edit matrices or dimensions to test custom configurations, or reset to the default 5P × 3R safe state</p>
+              </div>
+              <div class="header-actions">
+                <button id="btnResetScenarioA" class="btn btn-secondary btn-sm">Reset Default Safe State</button>
+                <button id="btnRunSafetyA" class="btn btn-primary btn-sm">Re-Run Safety Check</button>
+              </div>
+            </div>
+
+            <div class="config-controls-row">
+              <div class="control-group">
+                <label for="numProcesses">Processes (n)</label>
+                <input type="number" id="numProcesses" min="2" max="8" value="5" />
+              </div>
+              <div class="control-group">
+                <label for="numResources">Resource Types (m)</label>
+                <input type="number" id="numResources" min="1" max="5" value="3" />
+              </div>
+              <button id="btnResizeMatrices" class="btn btn-outline btn-sm">Apply Dimensions</button>
+
+              <div class="available-vector-group">
+                <span class="avail-label">Initial Available <code>Work₀</code>:</span>
+                <div id="availableInputsContainer" class="vector-inputs"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="matrices-triple-grid">
+            <div class="glass-card card-pad matrix-card">
+              <div class="matrix-header">
+                <h4>Allocation Matrix</h4>
+                <span class="formula-tag">Currently Held</span>
+              </div>
+              <div id="allocMatrixContainer" class="matrix-table-wrap"></div>
+            </div>
+
+            <div class="glass-card card-pad matrix-card">
+              <div class="matrix-header">
+                <h4>Maximum Matrix</h4>
+                <span class="formula-tag">Max Claim</span>
+              </div>
+              <div id="maxMatrixContainer" class="matrix-table-wrap"></div>
+            </div>
+
+            <div class="glass-card card-pad matrix-card need-highlight">
+              <div class="matrix-header">
+                <h4>Calculated Need Matrix</h4>
+                <span class="formula-tag accent">Need = Max − Alloc</span>
+              </div>
+              <div id="needMatrixContainer" class="matrix-table-wrap"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Work Vector Progression & Safe Sequence -->
+        <div class="col-stack">
+          <div class="glass-card card-pad">
+            <div class="card-header">
+              <div>
+                <h3>Safe Sequence &amp; Work Vector Progression</h3>
+                <p class="card-subtitle">At each step, finds <code>Pᵢ</code> with <code>Needᵢ ≤ Work</code>, then updates <code>Work = Work + Allocationᵢ</code></p>
+              </div>
+            </div>
+
+            <div class="safe-sequence-panel">
+              <div class="seq-label">COMPLETE SAFE SEQUENCE</div>
+              <div id="safeSequenceDisplayA" class="seq-chain"></div>
+            </div>
+
+            <div id="workStepTimelineA" class="timeline-container"></div>
+
+            <div class="concept-callout safe-callout">
+              <h4>Q: How does the Banker's Algorithm guarantee this state is 100% free from deadlock?</h4>
+              <p>
+                Starting with <code>Available = [3, 3, 2]</code>, Process <strong>P1</strong> has a remaining <code>Need = [1, 2, 2] ≤ [3, 3, 2]</code>, so the kernel can safely satisfy P1's maximum possible demand. Once P1 finishes, it releases its currently held allocation <code>[2, 0, 0]</code> back to the pool, expanding <code>Work</code> to <code>[5, 3, 2]</code>. This cumulative release of resources triggers a chain reaction allowing <strong>P3 → P4 → P0 → P2</strong> to complete in sequence without any possibility of deadlock.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- TAB B: SCENARIO B — REQUEST EXCEEDS AVAILABLE (WAITING / DEFERRED)-->
+    <!-- ================================================================= -->
+    <main id="tab-scenario-b" class="tab-panel">
+      <div class="two-col-grid">
+        <!-- Left: Scenario B Setup & Controls -->
+        <div class="col-stack">
+          <div class="glass-card card-pad">
+            <div class="card-header">
+              <div>
+                <h3>Scenario B: Request Exceeds Available Resources</h3>
+                <p class="card-subtitle">Submit a valid request within the process's remaining <code>Need</code>, but larger than <code>Available = [3, 3, 2]</code></p>
+              </div>
+              <button id="btnResetScenarioB" class="btn btn-secondary btn-sm">Load Default: P0 Requests [0, 4, 0]</button>
+            </div>
+
+            <div class="request-bar">
+              <div class="control-group">
+                <label for="reqSelectB">Requesting Process</label>
+                <select id="reqSelectB">
+                  <option value="0" selected>Process P0 (Need: 7, 4, 3)</option>
+                  <option value="1">Process P1 (Need: 1, 2, 2)</option>
+                  <option value="2">Process P2 (Need: 6, 0, 0)</option>
+                  <option value="3">Process P3 (Need: 0, 1, 1)</option>
+                  <option value="4">Process P4 (Need: 4, 3, 1)</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <label>Request Vector <code>[A, B, C]</code></label>
+                <div class="vector-inputs">
+                  <div class="vec-input-wrap"><span>R_A</span><input type="number" id="reqB_0" class="matrix-input" value="0" /></div>
+                  <div class="vec-input-wrap"><span>R_B</span><input type="number" id="reqB_1" class="matrix-input" value="4" /></div>
+                  <div class="vec-input-wrap"><span>R_C</span><input type="number" id="reqB_2" class="matrix-input" value="0" /></div>
+                </div>
+              </div>
+
+              <button id="btnEvaluateB" class="btn btn-accent">Evaluate Request</button>
+            </div>
+
+            <!-- 2-Step Verification Cards -->
+            <div id="scenarioBSteps" class="verification-steps-grid"></div>
+          </div>
+
+          <!-- Current Unchanged Matrices Snapshot -->
+          <div class="glass-card card-pad">
+            <div class="card-header">
+              <div>
+                <h3>System State Verification (Allocation Remains Unchanged)</h3>
+                <p class="card-subtitle">Current Available Vector remains <code>[3, 3, 2]</code> because the request is deferred, not granted</p>
+              </div>
+            </div>
+            <div id="scenarioBMatrixSnapshot"></div>
+          </div>
+        </div>
+
+        <!-- Right: Scenario B Explanation & Verdict -->
+        <div class="col-stack">
+          <div class="glass-card card-pad">
+            <h3>Request Decision Analysis</h3>
+            <div id="scenarioBVerdictBox" class="verdict-panel"></div>
+
+            <div class="concept-callout wait-callout">
+              <h4>Q: Why is an unavailable request placed in a Waiting state instead of being rejected as Invalid or flagged as Deadlock?</h4>
+              <p>
+                <strong>1. Why Waiting ≠ Invalid Request:</strong> Process <code>P0</code> requested <code>[0, 4, 0]</code>, which is within its declared remaining <code>Need [7, 4, 3]</code>. Because it abides by its maximum contract with the OS, the request is completely valid.<br/><br/>
+                <strong>2. Why Waiting ≠ Deadlock:</strong> Even though <code>P0</code> must wait because only 3 instances of <code>R_B</code> are currently free, active processes (<code>P1, P3, P4, P2</code>) can still execute and finish. Once they release their held instances of <code>R_B</code>, <code>P0</code> will be woken up and granted its request.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- TAB C: SCENARIO C — REQUEST PRODUCES UNSAFE STATE (DENIED)        -->
+    <!-- ================================================================= -->
+    <main id="tab-scenario-c" class="tab-panel">
+      <div class="two-col-grid">
+        <!-- Left: Scenario C Controls & Pretend Allocation -->
+        <div class="col-stack">
+          <div class="glass-card card-pad">
+            <div class="card-header">
+              <div>
+                <h3>Scenario C: Request Produces an Unsafe State</h3>
+                <p class="card-subtitle">Submit a request that satisfies both <code>Need</code> and <code>Available [3, 3, 2]</code>, but fails the Safety Algorithm</p>
+              </div>
+              <button id="btnResetScenarioC" class="btn btn-secondary btn-sm">Load Default: P4 Requests [3, 3, 0]</button>
+            </div>
+
+            <div class="request-bar">
+              <div class="control-group">
+                <label for="reqSelectC">Requesting Process</label>
+                <select id="reqSelectC">
+                  <option value="0">Process P0 (Need: 7, 4, 3)</option>
+                  <option value="1">Process P1 (Need: 1, 2, 2)</option>
+                  <option value="2">Process P2 (Need: 6, 0, 0)</option>
+                  <option value="3">Process P3 (Need: 0, 1, 1)</option>
+                  <option value="4" selected>Process P4 (Need: 4, 3, 1)</option>
+                </select>
+              </div>
+
+              <div class="control-group">
+                <label>Request Vector <code>[A, B, C]</code></label>
+                <div class="vector-inputs">
+                  <div class="vec-input-wrap"><span>R_A</span><input type="number" id="reqC_0" class="matrix-input" value="3" /></div>
+                  <div class="vec-input-wrap"><span>R_B</span><input type="number" id="reqC_1" class="matrix-input" value="3" /></div>
+                  <div class="vec-input-wrap"><span>R_C</span><input type="number" id="reqC_2" class="matrix-input" value="0" /></div>
+                </div>
+              </div>
+
+              <button id="btnEvaluateC" class="btn btn-primary">Simulate Temporary Allocation</button>
+            </div>
+
+            <div id="scenarioCSteps" class="verification-steps-grid"></div>
+          </div>
+
+          <!-- Temporary Simulated State vs Restored Original State -->
+          <div class="glass-card card-pad">
+            <div class="card-header">
+              <div>
+                <h3>Simulated Temporary Allocation vs. Restored Original State</h3>
+                <p class="card-subtitle">Shows why the Safety Algorithm fails on the temporary state and rolls back</p>
+              </div>
+            </div>
+            <div id="scenarioCComparisonTable"></div>
+          </div>
+        </div>
+
+        <!-- Right: Why Safety Fails & Why Unsafe != Deadlock -->
+        <div class="col-stack">
+          <div class="glass-card card-pad">
+            <h3>Safety Check on Temporary State (Why No Safe Sequence Exists)</h3>
+            <div id="scenarioCNeedCheckTable" style="margin-top: 12px;"></div>
+
+            <div class="concept-callout unsafe-callout">
+              <h4>Q: Why is an Unsafe State not necessarily a Deadlocked State?</h4>
+              <p>
+                <strong>1. What Unsafe Means:</strong> If the OS grants <code>P4 [3, 3, 0]</code>, free resources drop to <code>Available' = [0, 0, 2]</code>. At <code>[0, 0, 2]</code>, no process has a remaining <code>Need ≤ [0, 0, 2]</code>, meaning the OS <em>cannot guarantee</em> a safe completion sequence if every process suddenly demands its full declared <code>Maximum</code> at the same time.<br/><br/>
+                <strong>2. Why It Is Not Deadlocked:</strong> A deadlock has not actually occurred yet—processes are still running and might finish using fewer resources than their declared <code>Max</code>, or release resources early. However, because <strong>Banker's Algorithm is a conservative avoidance policy</strong>, it refuses to take that risk, denies the request, and immediately restores <code>Available = [3, 3, 2]</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- TAB D: SCENARIO D — DEADLOCK DETECTION & RECOVERY                 -->
+    <!-- ================================================================= -->
+    <main id="tab-scenario-d" class="tab-panel">
+      <div class="two-col-grid">
+        <div class="glass-card card-pad">
+          <div class="card-header">
+            <div>
+              <h3>Scenario D: Deadlock Detection &amp; Process Termination Recovery</h3>
+              <p class="card-subtitle">Analyzes current <code>Allocation</code> and active <code>Request (Q)</code> matrices (no <code>Max</code> matrix needed)</p>
+            </div>
+            <div class="header-actions">
+              <button id="btnLoadDeadlockPreset" class="btn btn-danger btn-sm">1. Confirmed Deadlock (P1↔P2↔P3↔P4)</button>
+              <button id="btnLoadCycleNoDeadlockPreset" class="btn btn-outline btn-sm">2. Potential Cycle Without Deadlock</button>
+            </div>
+          </div>
+
+          <div class="detection-assumptions-banner">
+            <span class="model-badge">Resource Model: Multiple-Instance (R_A: 7, R_B: 2, R_C: 6)</span>
+            <p>
+              <strong>Q: Does a cycle in a Resource-Allocation Graph always mean a confirmed deadlock?</strong><br/>
+              In a <em>Single-Instance</em> resource model, a cycle is both necessary and sufficient for deadlock. However, in this <em>Multiple-Instance</em> resource model, a cycle only indicates a <strong>potential circular wait</strong>. Preset 1 demonstrates a <strong>Confirmed Deadlock</strong> (where <code>Work = [0, 1, 0]</code> cannot satisfy any waiting process). Preset 2 shows a <strong>Cycle Without Deadlock</strong> (where <code>P2</code> has zero active requests and releases <code>[3, 0, 3]</code> to break the dependency cycle).
+            </p>
+          </div>
+
+          <div class="detection-matrices-grid">
+            <div class="sub-matrix-box">
+              <h4>Current Allocation</h4>
+              <div id="detAllocContainer"></div>
+            </div>
+            <div class="sub-matrix-box">
+              <h4>Active Request Matrix (Q)</h4>
+              <div id="detReqContainer"></div>
+            </div>
+            <div class="sub-matrix-box">
+              <h4>Available &amp; Recovery Action</h4>
+              <div id="detAvailContainer" class="det-avail-display"></div>
+
+              <div class="recovery-panel">
+                <h5>Recover: Terminate a Deadlocked Process</h5>
+                <p>Click a deadlocked process below to abort it, release its held resources into <code>Available</code>, and re-run detection:</p>
+                <div id="recoveryButtonsContainer" class="recovery-btn-group"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="detectionResultBox" class="detection-log-box"></div>
+        </div>
+
+        <!-- Right: SVG Resource Allocation Graph -->
+        <div class="glass-card card-pad">
+          <div class="card-header">
+            <div>
+              <h3>Resource-Allocation Graph (RAG) Visualization</h3>
+              <p class="card-subtitle">Solid Blue: Resource Allocated to Process • Dashed Red: Process Waiting for Resource</p>
+            </div>
+          </div>
+          <div class="svg-graph-wrapper">
+            <svg id="ragSvgCanvas" viewBox="0 0 600 400"></svg>
+          </div>
+          <div id="deadlockedProcsList" class="deadlock-summary-strip"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- TAB E: SCENARIO E — DEADLOCK PREVENTION POLICIES                  -->
+    <!-- ================================================================= -->
+    <main id="tab-scenario-e" class="tab-panel">
+      <div class="glass-card card-pad">
+        <div class="card-header">
+          <div>
+            <h3>Scenario E: Deadlock Prevention Policy Comparison &amp; Trade-Offs</h3>
+            <p class="card-subtitle">Modify the resource-allocation policy to eliminate at least one necessary Coffman condition</p>
+          </div>
+          <div class="policy-selector">
+            <button class="policy-btn active" data-policy="ordering">
+              1. Fixed Resource Ordering (Eliminates Circular Wait)
+            </button>
+            <button class="policy-btn" data-policy="allornothing">
+              2. All-at-Once Pre-Claiming (Eliminates Hold &amp; Wait)
+            </button>
+            <button class="policy-btn" data-policy="preemption">
+              3. Forced Preemption (Eliminates No Preemption)
+            </button>
+          </div>
+        </div>
+
+        <div id="preventionComparisonGrid" class="prevention-grid"></div>
+
+        <div class="tradeoff-metrics-section">
+          <h4>System Trade-Off Evaluation (Original Unconstrained vs. Prevention Policy)</h4>
+          <div class="metrics-triple">
+            <div class="metric-card">
+              <div class="metric-top">
+                <span>Resource Utilization</span>
+                <strong id="prevMetricUtil">74% vs 92% Original</strong>
+              </div>
+              <div class="progress-track">
+                <div id="prevBarUtil" class="progress-fill fill-sky" style="width: 74%"></div>
+              </div>
+              <small>Resources must be acquired according to strict rules rather than strictly when needed.</small>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-top">
+                <span>Process Concurrency</span>
+                <strong id="prevMetricConcurrency">78% (Moderate Reduction)</strong>
+              </div>
+              <div class="progress-track">
+                <div id="prevBarConcurrency" class="progress-fill fill-emerald" style="width: 78%"></div>
+              </div>
+              <small>Processes that violate the policy order or lack full upfront resources must wait earlier.</small>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-top">
+                <span>Deadlock Freedom</span>
+                <strong id="prevMetricStarvation">100% Guaranteed</strong>
+              </div>
+              <div class="progress-track">
+                <div id="prevBarDeadlock" class="progress-fill fill-violet" style="width: 100%"></div>
+              </div>
+              <small>Eliminating any single necessary Coffman condition makes deadlock structurally impossible.</small>
+            </div>
+          </div>
+        </div>
+
+        <div id="prevTraceLog" class="prevention-trace-box"></div>
+      </div>
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- TAB F: SCENARIO F — BOUNDARY & INVALID INPUTS                     -->
+    <!-- ================================================================= -->
+    <main id="tab-scenario-f" class="tab-panel">
+      <div class="glass-card card-pad">
+        <div class="card-header">
+          <div>
+            <h3>Scenario F: Boundary Cases vs. Invalid Inputs Verification</h3>
+            <p class="card-subtitle">Click any test card below to see how the engine distinguishes valid boundary states from invalid inputs</p>
+          </div>
+        </div>
+
+        <div class="boundary-cards-grid">
+          <div class="boundary-card valid-boundary">
+            <div class="b-tag tag-valid">VALID BOUNDARY CASE 1</div>
+            <h4>Zero Available Resources <code>Available = [0, 0, 0]</code></h4>
+            <p>All resources are currently allocated, but <code>P3</code> has <code>Need = [0, 0, 0]</code>. The engine processes this as a valid safe state because <code>P3</code> finishes immediately and releases <code>[2, 2, 2]</code>.</p>
+            <button class="btn btn-outline btn-sm boundary-trigger" data-case="zero_avail">Test Zero Available</button>
+          </div>
+
+          <div class="boundary-card valid-boundary">
+            <div class="b-tag tag-valid">VALID BOUNDARY CASE 2</div>
+            <h4>Process with Zero Remaining Need <code>Needᵢ = [0, 0, 0]</code></h4>
+            <p>Process <code>P1</code> has <code>Allocation == Max ([3, 2, 2])</code>. Handled as a valid boundary case: <code>P1</code> requires zero additional resources and completes in Step 1.</p>
+            <button class="btn btn-outline btn-sm boundary-trigger" data-case="zero_need">Test Zero Remaining Need</button>
+          </div>
+
+          <div class="boundary-card invalid-boundary">
+            <div class="b-tag tag-invalid">INVALID INPUT CASE 3</div>
+            <h4>Invalid Process Identifier <code>PID = P99</code></h4>
+            <p>Request references <code>P99</code> when only <code>P0–P4</code> exist. Rejected immediately as an <strong>INVALID INPUT</strong> without modifying any matrix.</p>
+            <button class="btn btn-outline btn-sm boundary-trigger" data-case="invalid_pid">Test Invalid Process ID</button>
+          </div>
+
+          <div class="boundary-card invalid-boundary">
+            <div class="b-tag tag-invalid">INVALID INPUT CASE 4</div>
+            <h4>Negative Resource Request <code>Request = [-1, 2, 0]</code></h4>
+            <p>Process <code>P0</code> submits a negative value <code>-1</code> for Resource A. Blocked by the input validator as a malformed <strong>INVALID INPUT</strong>.</p>
+            <button class="btn btn-outline btn-sm boundary-trigger" data-case="negative_req">Test Negative Request</button>
+          </div>
+
+          <div class="boundary-card invalid-boundary">
+            <div class="b-tag tag-invalid">INVALID REQUEST CASE 5</div>
+            <h4>Request Exceeds Remaining Need (<code>Requestᵢ &gt; Needᵢ</code>)</h4>
+            <p>Process <code>P0</code> has <code>Need = [7, 4, 3]</code> but requests <code>[8, 0, 0]</code>. Rejected under Banker's Step 1 because it exceeds declared Max.</p>
+            <button class="btn btn-outline btn-sm boundary-trigger" data-case="exceeds_need">Test Request &gt; Need</button>
+          </div>
+
+          <div class="boundary-card invalid-boundary">
+            <div class="b-tag tag-invalid">INVALID CONFIG CASE 6</div>
+            <h4>Allocation Exceeds Declared Maximum (<code>Allocᵢ &gt; Maxᵢ</code>)</h4>
+            <p><code>Allocation[P2][A] = 5</code> while <code>Max[P2][A] = 3</code>, creating a negative <code>Need = -2</code>. Flagged as an invalid matrix state.</p>
+            <button class="btn btn-outline btn-sm boundary-trigger" data-case="alloc_gt_max">Test Allocation &gt; Max</button>
+          </div>
+        </div>
+
+        <div class="boundary-console">
+          <div class="console-header">SCENARIO F DIAGNOSTIC OUTPUT</div>
+          <div id="boundaryConsoleBody" class="console-body">
+            Select any of the 6 boundary or invalid input test cases above to inspect the exact validation trace.
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- TAB G: ANALYTICAL TABLE (TC1-TC6), AI LOG & CORE OS Q&A           -->
+    <!-- ================================================================= -->
+    <main id="tab-report" class="tab-panel">
+      <div class="report-stack">
+        <div class="glass-card card-pad">
+          <div class="card-header">
+            <div>
+              <h3>Analytical Evaluation Results Table (TC1 – TC6)</h3>
+              <p class="card-subtitle">Summary of system conditions, actual outputs, expected behaviors, and technical conclusions across Scenarios A–F</p>
+            </div>
+            <button id="btnCopyAnalyticalTable" class="btn btn-primary btn-sm">Copy Table</button>
+          </div>
+          <div class="table-responsive">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Test Case</th>
+                  <th>System Condition</th>
+                  <th>Actual Result (System Output)</th>
+                  <th>Expected Result</th>
+                  <th>Analysis / Conclusion</th>
+                </tr>
+              </thead>
+              <tbody id="analyticalTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="glass-card card-pad">
+          <div class="card-header">
+            <div>
+              <h3>AI Development &amp; Verification Record</h3>
+              <p class="card-subtitle">Documentation of AI tools used, outputs generated, and verification steps</p>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>AI Tool Used</th>
+                  <th>Purpose</th>
+                  <th>Output Generated</th>
+                  <th>Verification &amp; Testing</th>
+                </tr>
+              </thead>
+              <tbody id="aiUsageTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="glass-card card-pad">
+          <div class="card-header">
+            <div>
+              <h3>Core Operating System Conceptual Questions</h3>
+              <p class="card-subtitle">Fundamental architectural distinctions in resource allocation and deadlock handling</p>
+            </div>
+          </div>
+          <div class="viva-grid">
+            <div class="viva-card">
+              <h4>Q1: How does Deadlock Avoidance differ from Deadlock Detection?</h4>
+              <p>
+                <strong>Deadlock Avoidance (Scenarios A–C):</strong> Proactive approach that requires advance <code>Max</code> declarations and runs Banker's Algorithm before granting a request to ensure the system never leaves a <strong>Safe State</strong>.<br/><br/>
+                <strong>Deadlock Detection (Scenario D):</strong> Reactive approach that does not require <code>Max</code> declarations. It inspects current <code>Allocation</code> and active <code>Request (Q)</code> matrices to determine if processes are currently stuck in a circular wait.
+              </p>
+            </div>
+            <div class="viva-card">
+              <h4>Q2: Why doesn't an Unsafe State automatically mean the system is Deadlocked?</h4>
+              <p>
+                An <strong>Unsafe State (Scenario C)</strong> simply means the kernel cannot guarantee a safe completion sequence if every process demands its full declared <code>Max</code> simultaneously. However, no process is blocked yet—processes can still finish normally if they release resources early. A <strong>Deadlocked State (Scenario D)</strong> means processes are already blocked waiting on each other and cannot proceed.
+              </p>
+            </div>
+            <div class="viva-card">
+              <h4>Q3: How does the kernel distinguish between Waiting, Denied, and Invalid requests?</h4>
+              <p>
+                • <strong>Waiting / Deferred (Scenario B):</strong> <code>Request ≤ Need</code> is satisfied, but <code>Request &gt; Available</code>. Legitimate request that waits for resources to be freed.<br/>
+                • <strong>Denied &amp; Restored (Scenario C):</strong> Satisfies both <code>Need</code> and <code>Available</code>, but fails the Safety Algorithm check.<br/>
+                • <strong>Invalid Input (Scenario F):</strong> Negative request, invalid PID, or <code>Request &gt; Need</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
